@@ -7,6 +7,40 @@ terraform {
   }
 }
 
+# IAM Role for SSM
+resource "aws_iam_role" "ssm_role" {
+  name = "${var.project_name}-ssm-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          Service = "ec2.amazonaws.com"
+        }
+      }
+    ]
+  })
+
+  tags = {
+    Name = "${var.project_name}-ssm-role"
+  }
+}
+
+# Attach SSM managed policy
+resource "aws_iam_role_policy_attachment" "ssm_managed_instance_core" {
+  role       = aws_iam_role.ssm_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+}
+
+# Instance Profile
+resource "aws_iam_instance_profile" "ssm_profile" {
+  name = "${var.project_name}-ssm-profile"
+  role = aws_iam_role.ssm_role.name
+}
+
 # Ubuntu 24 AMI for control node
 data "aws_ami" "ubuntu_24" {
   most_recent = true
@@ -51,6 +85,7 @@ resource "aws_instance" "control_node" {
   subnet_id              = var.subnet_id
   vpc_security_group_ids = [var.control_node_sg_id]
   associate_public_ip_address = true
+  iam_instance_profile   = aws_iam_instance_profile.ssm_profile.name
 
   root_block_device {
     volume_type           = "gp3"
@@ -73,6 +108,7 @@ resource "aws_instance" "host1_linux" {
   subnet_id              = var.subnet_id
   vpc_security_group_ids = [var.linux_hosts_sg_id]
   associate_public_ip_address = true
+  iam_instance_profile   = aws_iam_instance_profile.ssm_profile.name
 
   root_block_device {
     volume_type           = "gp3"
@@ -95,6 +131,7 @@ resource "aws_instance" "host2_windows" {
   subnet_id              = var.subnet_id
   vpc_security_group_ids = [var.windows_hosts_sg_id]
   associate_public_ip_address = true
+  iam_instance_profile   = aws_iam_instance_profile.ssm_profile.name
 
   root_block_device {
     volume_type           = "gp3"

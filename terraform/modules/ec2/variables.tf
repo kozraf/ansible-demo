@@ -24,6 +24,12 @@ variable "windows_hosts_sg_id" {
   type        = string
 }
 
+variable "project_name" {
+  description = "Project name for resource naming"
+  type        = string
+  default     = "ansible-poc"
+}
+
 variable "ubuntu_ami_owner" {
   description = "Owner of Ubuntu AMI"
   type        = string

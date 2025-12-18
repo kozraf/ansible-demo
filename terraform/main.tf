@@ -153,6 +153,7 @@ module "ec2" {
   control_node_sg_id   = aws_security_group.control_node.id
   linux_hosts_sg_id    = aws_security_group.linux_hosts.id
   windows_hosts_sg_id  = aws_security_group.windows_hosts.id
+  project_name         = var.project_name
   ubuntu_ami_owner     = var.ubuntu_ami_owner
   windows_ami_owner    = var.windows_ami_owner
 }

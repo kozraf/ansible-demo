@@ -117,6 +117,24 @@ ssh -i <key-pair> ubuntu@<host1-public-ip>
 mstsc /v:<host2-public-ip>
 # Username: ansible
 # Password: AnsibleUser@123! (change in production)
+
+## Session Manager Access (Recommended)
+
+Both Linux instances (control-node and host1-linux) support AWS Session Manager for secure, keyless access:
+
+```bash
+# Connect to control node
+aws ssm start-session --target <control-node-instance-id>
+
+# Connect to Linux host
+aws ssm start-session --target <host1-linux-instance-id>
+```
+
+**Benefits:**
+- No SSH keys required
+- Secure connection through AWS
+- Works from anywhere with AWS credentials
+- Audit trail in CloudTrail
 ```
 
 ## GitHub Actions Workflows

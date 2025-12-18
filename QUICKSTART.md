@@ -49,9 +49,28 @@ Note the public IPs and private IPs from the output.
 
 ### 5. Access Control Node
 
+**Option A: SSH (Traditional)**
 ```bash
 ssh -i /path/to/keypair.pem ubuntu@<control-node-public-ip>
 ```
+
+**Option B: AWS Session Manager (Recommended)**
+```bash
+# Connect via Session Manager (no SSH key needed)
+aws ssm start-session --target <control-node-instance-id>
+```
+
+### 6. Access Linux Host via Session Manager
+
+```bash
+# Connect to Linux host via Session Manager
+aws ssm start-session --target <host1-linux-instance-id>
+```
+
+Both Linux instances (control node and host1-linux) are configured with:
+- SSM agent installed and running
+- IAM role with SSM permissions attached
+- Session Manager connectivity enabled
 
 ## Next: Configure Ansible
 
