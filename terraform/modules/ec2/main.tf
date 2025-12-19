@@ -107,7 +107,7 @@ resource "aws_instance" "host1_linux" {
   instance_type          = var.instance_type
   subnet_id              = var.subnet_id
   vpc_security_group_ids = [var.linux_hosts_sg_id]
-  associate_public_ip_address = true
+  associate_public_ip_address = false  # Managed host - no public IP needed
   iam_instance_profile   = aws_iam_instance_profile.ssm_profile.name
 
   root_block_device {
@@ -130,7 +130,7 @@ resource "aws_instance" "host2_windows" {
   instance_type          = var.instance_type
   subnet_id              = var.subnet_id
   vpc_security_group_ids = [var.windows_hosts_sg_id]
-  associate_public_ip_address = true
+  associate_public_ip_address = false  # Managed host - no public IP needed
   iam_instance_profile   = aws_iam_instance_profile.ssm_profile.name
 
   root_block_device {
