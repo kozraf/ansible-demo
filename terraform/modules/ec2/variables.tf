@@ -41,3 +41,8 @@ variable "windows_ami_owner" {
   type        = string
   default     = "801119661308"
 }
+
+variable "ansible_password_secret_name" {
+  description = "Name of the Secrets Manager secret containing ansible user password"
+  type        = string
+}

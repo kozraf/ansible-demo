@@ -35,6 +35,25 @@ resource "aws_iam_role_policy_attachment" "ssm_managed_instance_core" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
 }
 
+# Attach Secrets Manager policy
+resource "aws_iam_role_policy" "secrets_manager_access" {
+  name = "${var.project_name}-secrets-manager-policy"
+  role = aws_iam_role.ssm_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "secretsmanager:GetSecretValue"
+        ]
+        Resource = "arn:aws:secretsmanager:*:*:secret:${var.ansible_password_secret_name}-*"
+      }
+    ]
+  })
+}
+
 # Instance Profile
 resource "aws_iam_instance_profile" "ssm_profile" {
   name = "${var.project_name}-ssm-profile"

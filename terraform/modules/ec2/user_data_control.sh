@@ -46,7 +46,15 @@ step="install-packages"
 log "STEP: ${step} - installing base packages"
 apt-get install -y --no-install-recommends \
     python3-venv python3-dev build-essential \
-    git curl wget openssh-server openssh-client jq vim nano ca-certificates
+    git curl wget openssh-server openssh-client jq vim nano ca-certificates unzip
+step_complete "${step}"
+
+step="install-awscli"
+log "STEP: ${step} - installing AWS CLI v2"
+curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+unzip awscliv2.zip
+./aws/install
+rm -rf aws awscliv2.zip
 step_complete "${step}"
 
 step="create-ansible-venv"
@@ -64,6 +72,10 @@ log "STEP: ${step} - creating ansible user and directories"
 useradd -m -s /bin/bash ansible || log "useradd returned non-zero"
 echo "ansible ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/ansible
 chmod 440 /etc/sudoers.d/ansible
+
+# Retrieve ansible user password from Secrets Manager
+ansible_password=$(aws secretsmanager get-secret-value --secret-id ansible-poc-ansible-password --query SecretString --output text) || log "Failed to retrieve ansible password from Secrets Manager"
+echo "ansible:$ansible_password" | chpasswd || log "chpasswd failed"
 
 sudo -u ansible mkdir -p /home/ansible/.ssh /home/ansible/playbooks /home/ansible/inventory
 sudo -u ansible ssh-keygen -t rsa -b 4096 -f /home/ansible/.ssh/id_rsa -N "" || log "ssh-keygen returned non-zero"

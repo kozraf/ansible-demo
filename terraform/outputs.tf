@@ -48,6 +48,11 @@ output "ubuntu_ami_id" {
   value       = module.ec2.ubuntu_ami_id
 }
 
+output "ansible_password_secret_name" {
+  description = "Secrets Manager secret name containing ansible user password"
+  value       = aws_secretsmanager_secret.ansible_password.name
+}
+
 output "windows_ami_id" {
   description = "Windows Server 2022 AMI ID used"
   value       = module.ec2.windows_ami_id

@@ -144,6 +144,26 @@ data "aws_availability_zones" "available" {
   state = "available"
 }
 
+# Random password for ansible user
+resource "random_password" "ansible_user" {
+  length  = 16
+  special = true
+  upper   = true
+  lower   = true
+  numeric = true
+}
+
+# Secrets Manager secret for ansible user password
+resource "aws_secretsmanager_secret" "ansible_password" {
+  name = "${var.project_name}-ansible-password"
+  description = "Random password for ansible user on control node"
+}
+
+resource "aws_secretsmanager_secret_version" "ansible_password" {
+  secret_id     = aws_secretsmanager_secret.ansible_password.id
+  secret_string = random_password.ansible_user.result
+}
+
 # EC2 Module - Instances
 module "ec2" {
   source = "./modules/ec2"
@@ -156,4 +176,5 @@ module "ec2" {
   project_name         = var.project_name
   ubuntu_ami_owner     = var.ubuntu_ami_owner
   windows_ami_owner    = var.windows_ami_owner
+  ansible_password_secret_name = aws_secretsmanager_secret.ansible_password.name
 }
