@@ -45,3 +45,9 @@ variable "windows_ami_owner" {
   type        = string
   default     = "801119661308" # Amazon Windows AMIs
 }
+
+variable "associate_public_ip_address" {
+  description = "Whether to associate public IP addresses with instances"
+  type        = bool
+  default     = true
+}

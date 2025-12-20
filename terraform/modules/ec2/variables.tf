@@ -30,6 +30,18 @@ variable "project_name" {
   default     = "ansible-poc"
 }
 
+variable "environment" {
+  description = "Environment name (dev, semaphore, etc)"
+  type        = string
+  default     = "dev"
+}
+
+variable "associate_public_ip_address" {
+  description = "Whether to associate public IP with control node"
+  type        = bool
+  default     = true
+}
+
 variable "ubuntu_ami_owner" {
   description = "Owner of Ubuntu AMI"
   type        = string

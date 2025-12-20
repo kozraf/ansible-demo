@@ -63,6 +63,17 @@ resource "aws_security_group" "control_node" {
     cidr_blocks = ["0.0.0.0/0"] # Change this to your IP for security
   }
 
+  # Semaphore web UI port
+  dynamic "ingress" {
+    for_each = var.environment == "semaphore" ? [1] : []
+    content {
+      from_port   = 3000
+      to_port     = 3000
+      protocol    = "tcp"
+      cidr_blocks = ["0.0.0.0/0"] # Change this to your IP for security
+    }
+  }
+
   egress {
     from_port   = 0
     to_port     = 0
@@ -174,6 +185,8 @@ module "ec2" {
   linux_hosts_sg_id    = aws_security_group.linux_hosts.id
   windows_hosts_sg_id  = aws_security_group.windows_hosts.id
   project_name         = var.project_name
+  environment          = var.environment
+  associate_public_ip_address = var.associate_public_ip_address
   ubuntu_ami_owner     = var.ubuntu_ami_owner
   windows_ami_owner    = var.windows_ami_owner
   ansible_password_secret_name = aws_secretsmanager_secret.ansible_password.name

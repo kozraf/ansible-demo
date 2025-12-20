@@ -1,0 +1,162 @@
+#!/bin/bash
+set -euo pipefail
+
+# Redirect all output to a logfile and keep stdout/stderr visible
+exec > >(tee -a /var/log/user-data.log) 2>&1
+
+log() { printf "%s %s\n" "$(date -u +'%Y-%m-%dT%H:%M:%SZ')" "$*"; }
+step_complete() { log "STEP_COMPLETE: $1"; echo "STEP_COMPLETE: $1" >> /var/log/user-data-steps.log; }
+
+trap 'log "ERROR: user-data aborted at line ${LINENO}"; echo "ERROR at line ${LINENO}" >> /var/log/user-data-steps.log; exit 1' ERR
+
+log "Starting Semaphore server user-data"
+
+step="update-packages"
+log "STEP: ${step} - updating apt and upgrading packages"
+export DEBIAN_FRONTEND=noninteractive
+apt-get update -y
+apt-get upgrade -y
+step_complete "${step}"
+
+step="ssm-agent"
+log "STEP: ${step} - SSM agent handling"
+if snap list amazon-ssm-agent >/dev/null 2>&1; then
+    log "SSM agent present via snap"
+    snap start amazon-ssm-agent || log "snap start returned non-zero"
+else
+    log "SSM agent not in snap; attempting dpkg install (non-fatal)"
+    wget -q https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/debian_amd64/amazon-ssm-agent.deb || log "wget failed"
+    dpkg -i amazon-ssm-agent.deb || log "dpkg install returned non-zero"
+    systemctl enable amazon-ssm-agent || log "systemctl enable failed"
+    systemctl start amazon-ssm-agent || log "systemctl start failed"
+fi
+step_complete "${step}"
+
+step="install-dependencies"
+log "STEP: ${step} - installing dependencies"
+apt-get install -y --no-install-recommends \
+    git curl wget ca-certificates unzip jq vim nano \
+    ansible openssh-client python3-pip
+step_complete "${step}"
+
+step="download-semaphore"
+log "STEP: ${step} - downloading Ansible Semaphore"
+SEMAPHORE_VERSION="2.10.22"
+wget -q "https://github.com/ansible-semaphore/semaphore/releases/download/v${SEMAPHORE_VERSION}/semaphore_${SEMAPHORE_VERSION}_linux_amd64.deb"
+dpkg -i "semaphore_${SEMAPHORE_VERSION}_linux_amd64.deb"
+step_complete "${step}"
+
+step="create-semaphore-user"
+log "STEP: ${step} - creating semaphore user"
+useradd -r -m -d /opt/semaphore -s /bin/bash semaphore || log "User already exists"
+mkdir -p /opt/semaphore
+chown -R semaphore:semaphore /opt/semaphore
+step_complete "${step}"
+
+step="configure-semaphore"
+log "STEP: ${step} - configuring Semaphore"
+cat > /opt/semaphore/config.json <<'EOF'
+{
+  "mysql": {
+    "host": "",
+    "user": "",
+    "pass": "",
+    "name": ""
+  },
+  "bolt": {
+    "host": "/opt/semaphore/semaphore.db"
+  },
+  "port": ":3000",
+  "interface": "",
+  "tmp_path": "/tmp/semaphore",
+  "cookie_hash": "$(openssl rand -base64 32)",
+  "cookie_encryption": "$(openssl rand -base64 32)",
+  "access_key_encryption": "$(openssl rand -base64 32)",
+  "email_sender": "",
+  "email_host": "",
+  "email_port": "",
+  "email_username": "",
+  "email_password": "",
+  "email_secure": false,
+  "web_host": "",
+  "ldap_binddn": "",
+  "ldap_bindpassword": "",
+  "ldap_server": "",
+  "ldap_searchdn": "",
+  "ldap_searchfilter": "",
+  "ldap_mappings": {
+    "dn": "",
+    "mail": "",
+    "uid": "",
+    "cn": ""
+  },
+  "telegram_chat": "",
+  "telegram_token": "",
+  "concurrency_mode": "",
+  "max_parallel_tasks": 0,
+  "email_alert": false,
+  "telegram_alert": false,
+  "slack_alert": false,
+  "slack_url": "",
+  "runner_registration_token": "",
+  "max_runner_api_token_age": 0,
+  "use_remote_runner": false,
+  "git_client_id": "",
+  "git_client_secret": "",
+  "oidc_providers": {}
+}
+EOF
+chown semaphore:semaphore /opt/semaphore/config.json
+chmod 600 /opt/semaphore/config.json
+step_complete "${step}"
+
+step="create-systemd-service"
+log "STEP: ${step} - creating systemd service"
+cat > /etc/systemd/system/semaphore.service <<'EOF'
+[Unit]
+Description=Ansible Semaphore
+Documentation=https://github.com/ansible-semaphore/semaphore
+After=network.target
+
+[Service]
+Type=simple
+User=semaphore
+Group=semaphore
+WorkingDirectory=/opt/semaphore
+ExecStart=/usr/bin/semaphore server --config /opt/semaphore/config.json
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target
+EOF
+step_complete "${step}"
+
+step="setup-admin-user"
+log "STEP: ${step} - setting up admin user"
+# Run semaphore setup to create admin user non-interactively
+sudo -u semaphore bash -c 'cd /opt/semaphore && semaphore setup --config /opt/semaphore/config.json'
+step_complete "${step}"
+
+step="start-semaphore"
+log "STEP: ${step} - starting Semaphore service"
+systemctl daemon-reload
+systemctl enable semaphore
+systemctl start semaphore
+step_complete "${step}"
+
+step="wait-for-semaphore"
+log "STEP: ${step} - waiting for Semaphore to be ready"
+for i in {1..30}; do
+    if curl -s http://localhost:3000 > /dev/null 2>&1; then
+        log "Semaphore is ready"
+        break
+    fi
+    log "Waiting for Semaphore to start... attempt $i/30"
+    sleep 2
+done
+step_complete "${step}"
+
+log "Semaphore installation complete"
+log "Access Semaphore at http://<instance-public-ip>:3000"
+log "Default credentials will be set during first access or via semaphore user add"

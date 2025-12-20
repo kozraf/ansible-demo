@@ -97,13 +97,13 @@ data "aws_ami" "windows_2022" {
   }
 }
 
-# Control Node - Ubuntu 24
+# Control Node - Ubuntu 24 (Can be Ansible Control or Semaphore Server)
 resource "aws_instance" "control_node" {
   ami                    = data.aws_ami.ubuntu_24.id
   instance_type          = var.instance_type
   subnet_id              = var.subnet_id
   vpc_security_group_ids = [var.control_node_sg_id]
-  associate_public_ip_address = true
+  associate_public_ip_address = var.associate_public_ip_address
   iam_instance_profile   = aws_iam_instance_profile.ssm_profile.name
 
   root_block_device {
@@ -113,10 +113,10 @@ resource "aws_instance" "control_node" {
     encrypted             = true
   }
 
-  user_data = base64encode(file("${path.module}/user_data_control.sh"))
+  user_data = base64encode(file("${path.module}/${var.environment == "semaphore" ? "user_data_semaphore.sh" : "user_data_control.sh"}"))
 
   tags = {
-    Name = "control-node"
+    Name = var.environment == "semaphore" ? "semaphore-server" : "control-node"
   }
 }
 
