@@ -20,7 +20,7 @@ log "STEP: $${step} - updating apt and upgrading packages"
 export DEBIAN_FRONTEND=noninteractive
 apt-get update -y
 apt-get upgrade -y
-step_complete "${step}"
+step_complete "$${step}"
 
 step="ssm-agent"
 log "STEP: $${step} - SSM agent handling"
@@ -34,28 +34,28 @@ else
     systemctl enable amazon-ssm-agent || log "systemctl enable failed"
     systemctl start amazon-ssm-agent || log "systemctl start failed"
 fi
-step_complete "${step}"
+step_complete "$${step}"
 
 step="install-dependencies"
 log "STEP: $${step} - installing dependencies"
 apt-get install -y --no-install-recommends \
     git curl wget ca-certificates unzip jq vim nano \
     ansible openssh-client python3-pip
-step_complete "${step}"
+step_complete "$${step}"
 
 step="download-semaphore"
 log "STEP: $${step} - downloading Ansible Semaphore"
 SEMAPHORE_VERSION="2.10.22"
 wget -q "https://github.com/ansible-semaphore/semaphore/releases/download/v$${SEMAPHORE_VERSION}/semaphore_$${SEMAPHORE_VERSION}_linux_amd64.deb"
 dpkg -i "semaphore_$${SEMAPHORE_VERSION}_linux_amd64.deb"
-step_complete "${step}"
+step_complete "$${step}"
 
 step="create-semaphore-user"
 log "STEP: $${step} - creating semaphore user"
 useradd -r -m -d /opt/semaphore -s /bin/bash semaphore || log "User already exists"
 mkdir -p /opt/semaphore
 chown -R semaphore:semaphore /opt/semaphore
-step_complete "${step}"
+step_complete "$${step}"
 
 step="configure-semaphore"
 log "STEP: $${step} - configuring Semaphore"
@@ -112,7 +112,7 @@ cat > /opt/semaphore/config.json <<'EOF'
 EOF
 chown semaphore:semaphore /opt/semaphore/config.json
 chmod 600 /opt/semaphore/config.json
-step_complete "${step}"
+step_complete "$${step}"
 
 step="create-systemd-service"
 log "STEP: $${step} - creating systemd service"
@@ -134,7 +134,7 @@ RestartSec=5s
 [Install]
 WantedBy=multi-user.target
 EOF
-step_complete "${step}"
+step_complete "$${step}"
 
 step="setup-admin-user"
 log "STEP: $${step} - setting up admin user"
@@ -174,14 +174,14 @@ fi
     echo "$SEMAPHORE_PASSWORD"  # Admin password
     echo "$SEMAPHORE_PASSWORD"  # Confirm password
 } | sudo -u semaphore bash -c 'cd /opt/semaphore && semaphore setup --config /opt/semaphore/config.json' || log "Setup completed with exit code $?"
-step_complete "${step}"
+step_complete "$${step}"
 
 step="start-semaphore"
 log "STEP: $${step} - starting Semaphore service"
 systemctl daemon-reload
 systemctl enable semaphore
 systemctl start semaphore
-step_complete "${step}"
+step_complete "$${step}"
 
 step="wait-for-semaphore"
 log "STEP: $${step} - waiting for Semaphore to be ready"
@@ -193,7 +193,7 @@ for i in {1..30}; do
     log "Waiting for Semaphore to start... attempt $i/30"
     sleep 2
 done
-step_complete "${step}"
+step_complete "$${step}"
 
 log "Semaphore installation complete"
 log "Access Semaphore at http://<instance-public-ip>:3000"
