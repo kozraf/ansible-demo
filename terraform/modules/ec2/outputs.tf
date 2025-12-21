@@ -1,31 +1,31 @@
 output "control_node_id" {
   description = "Control node instance ID"
-  value       = try(aws_instance.control_node[0].id, null)
+  value       = try(aws_instance.ansible_control_node[0].id, null)
 }
 
 output "semaphore_server_id" {
   description = "Semaphore server instance ID (alias for control_node_id)"
-  value       = try(aws_instance.control_node[0].id, null)
+  value       = try(aws_instance.semaphore_server[0].id, null)
 }
 
 output "control_node_public_ip" {
   description = "Control node public IP"
-  value       = try(aws_instance.control_node[0].public_ip, null)
+  value       = try(aws_instance.ansible_control_node[0].public_ip, null)
 }
 
 output "semaphore_public_ip" {
   description = "Semaphore server public IP (alias for control_node_public_ip)"
-  value       = try(aws_instance.control_node[0].public_ip, null)
+  value       = try(aws_instance.semaphore_server[0].public_ip, null)
 }
 
 output "control_node_private_ip" {
   description = "Control node private IP"
-  value       = try(aws_instance.control_node[0].private_ip, null)
+  value       = try(aws_instance.ansible_control_node[0].private_ip, null)
 }
 
 output "semaphore_private_ip" {
   description = "Semaphore server private IP (alias for control_node_private_ip)"
-  value       = try(aws_instance.control_node[0].private_ip, null)
+  value       = try(aws_instance.semaphore_server[0].private_ip, null)
 }
 
 output "host1_linux_id" {

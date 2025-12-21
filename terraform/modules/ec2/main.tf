@@ -101,8 +101,9 @@ data "aws_ami" "windows_2022" {
 }
 
 # Control Node - Ubuntu 24 (Can be Ansible Control or Semaphore Server)
-resource "aws_instance" "control_node" {
-  count                  = var.create_control_node ? 1 : 0
+# Ansible Control Node (dev environment)
+resource "aws_instance" "ansible_control_node" {
+  count                  = var.environment != "semaphore" && var.create_control_node ? 1 : 0
   ami                    = data.aws_ami.ubuntu_24.id
   instance_type          = var.instance_type
   subnet_id              = var.subnet_id
@@ -117,17 +118,37 @@ resource "aws_instance" "control_node" {
     encrypted             = true
   }
 
-  user_data = base64encode(
-    var.environment == "semaphore"
-      ? templatefile("${path.module}/user_data_semaphore.sh", {
-          ansible_password_secret_name = var.ansible_password_secret_name
-          aws_region                   = data.aws_region.current.name
-        })
-      : file("${path.module}/user_data_control.sh")
-  )
+  user_data = base64encode(file("${path.module}/user_data_control.sh"))
 
   tags = {
-    Name = var.environment == "semaphore" ? "semaphore-server" : "control-node"
+    Name = "control-node"
+  }
+}
+
+# Semaphore Server (semaphore environment)
+resource "aws_instance" "semaphore_server" {
+  count                  = var.environment == "semaphore" && var.create_control_node ? 1 : 0
+  ami                    = data.aws_ami.ubuntu_24.id
+  instance_type          = var.instance_type
+  subnet_id              = var.subnet_id
+  vpc_security_group_ids = [var.control_node_sg_id]
+  associate_public_ip_address = var.associate_public_ip_address
+  iam_instance_profile   = aws_iam_instance_profile.ssm_profile.name
+
+  root_block_device {
+    volume_type           = "gp3"
+    volume_size           = 20
+    delete_on_termination = true
+    encrypted             = true
+  }
+
+  user_data = base64encode(templatefile("${path.module}/user_data_semaphore.sh", {
+    ansible_password_secret_name = var.ansible_password_secret_name
+    aws_region                   = data.aws_region.current.name
+  }))
+
+  tags = {
+    Name = "semaphore-server"
   }
 }
 
