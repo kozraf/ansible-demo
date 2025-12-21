@@ -11,19 +11,19 @@ AWS_REGION="${aws_region}"
 log() { printf "%s %s\n" "$(date -u +'%Y-%m-%dT%H:%M:%SZ')" "$*"; }
 step_complete() { log "STEP_COMPLETE: $1"; echo "STEP_COMPLETE: $1" >> /var/log/user-data-steps.log; }
 
-trap 'log "ERROR: user-data aborted at line ${LINENO}"; echo "ERROR at line ${LINENO}" >> /var/log/user-data-steps.log; exit 1' ERR
+trap 'log "ERROR: user-data aborted at line $${LINENO}"; echo "ERROR at line $${LINENO}" >> /var/log/user-data-steps.log; exit 1' ERR
 
 log "Starting Semaphore server user-data"
 
 step="update-packages"
-log "STEP: ${step} - updating apt and upgrading packages"
+log "STEP: $${step} - updating apt and upgrading packages"
 export DEBIAN_FRONTEND=noninteractive
 apt-get update -y
 apt-get upgrade -y
 step_complete "${step}"
 
 step="ssm-agent"
-log "STEP: ${step} - SSM agent handling"
+log "STEP: $${step} - SSM agent handling"
 if snap list amazon-ssm-agent >/dev/null 2>&1; then
     log "SSM agent present via snap"
     snap start amazon-ssm-agent || log "snap start returned non-zero"
@@ -37,28 +37,28 @@ fi
 step_complete "${step}"
 
 step="install-dependencies"
-log "STEP: ${step} - installing dependencies"
+log "STEP: $${step} - installing dependencies"
 apt-get install -y --no-install-recommends \
     git curl wget ca-certificates unzip jq vim nano \
     ansible openssh-client python3-pip
 step_complete "${step}"
 
 step="download-semaphore"
-log "STEP: ${step} - downloading Ansible Semaphore"
+log "STEP: $${step} - downloading Ansible Semaphore"
 SEMAPHORE_VERSION="2.10.22"
-wget -q "https://github.com/ansible-semaphore/semaphore/releases/download/v${SEMAPHORE_VERSION}/semaphore_${SEMAPHORE_VERSION}_linux_amd64.deb"
-dpkg -i "semaphore_${SEMAPHORE_VERSION}_linux_amd64.deb"
+wget -q "https://github.com/ansible-semaphore/semaphore/releases/download/v$${SEMAPHORE_VERSION}/semaphore_$${SEMAPHORE_VERSION}_linux_amd64.deb"
+dpkg -i "semaphore_$${SEMAPHORE_VERSION}_linux_amd64.deb"
 step_complete "${step}"
 
 step="create-semaphore-user"
-log "STEP: ${step} - creating semaphore user"
+log "STEP: $${step} - creating semaphore user"
 useradd -r -m -d /opt/semaphore -s /bin/bash semaphore || log "User already exists"
 mkdir -p /opt/semaphore
 chown -R semaphore:semaphore /opt/semaphore
 step_complete "${step}"
 
 step="configure-semaphore"
-log "STEP: ${step} - configuring Semaphore"
+log "STEP: $${step} - configuring Semaphore"
 cat > /opt/semaphore/config.json <<'EOF'
 {
   "mysql": {
@@ -115,7 +115,7 @@ chmod 600 /opt/semaphore/config.json
 step_complete "${step}"
 
 step="create-systemd-service"
-log "STEP: ${step} - creating systemd service"
+log "STEP: $${step} - creating systemd service"
 cat > /etc/systemd/system/semaphore.service <<'EOF'
 [Unit]
 Description=Ansible Semaphore
@@ -137,14 +137,14 @@ EOF
 step_complete "${step}"
 
 step="setup-admin-user"
-log "STEP: ${step} - setting up admin user"
+log "STEP: $${step} - setting up admin user"
 # Retrieve password from AWS Secrets Manager
-log "Retrieving admin password from Secrets Manager: ${ANSIBLE_PASSWORD_SECRET_NAME}"
+log "Retrieving admin password from Secrets Manager: $${ANSIBLE_PASSWORD_SECRET_NAME}"
 SEMAPHORE_PASSWORD=$(aws secretsmanager get-secret-value \
-  --secret-id "${ANSIBLE_PASSWORD_SECRET_NAME}" \
+  --secret-id "$${ANSIBLE_PASSWORD_SECRET_NAME}" \
   --query SecretString \
   --output text \
-  --region "${AWS_REGION}" 2>&1)
+  --region "$${AWS_REGION}" 2>&1)
 
 if [ $? -ne 0 ]; then
     log "ERROR: Failed to retrieve password from Secrets Manager. Response: $SEMAPHORE_PASSWORD"
@@ -177,14 +177,14 @@ fi
 step_complete "${step}"
 
 step="start-semaphore"
-log "STEP: ${step} - starting Semaphore service"
+log "STEP: $${step} - starting Semaphore service"
 systemctl daemon-reload
 systemctl enable semaphore
 systemctl start semaphore
 step_complete "${step}"
 
 step="wait-for-semaphore"
-log "STEP: ${step} - waiting for Semaphore to be ready"
+log "STEP: $${step} - waiting for Semaphore to be ready"
 for i in {1..30}; do
     if curl -s http://localhost:3000 > /dev/null 2>&1; then
         log "Semaphore is ready"
