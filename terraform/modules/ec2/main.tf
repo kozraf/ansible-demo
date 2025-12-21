@@ -7,6 +7,9 @@ terraform {
   }
 }
 
+# Get current AWS region
+data "aws_region" "current" {}
+
 # IAM Role for SSM
 resource "aws_iam_role" "ssm_role" {
   name = "${var.project_name}-${var.environment}-ssm-role"
@@ -114,7 +117,14 @@ resource "aws_instance" "control_node" {
     encrypted             = true
   }
 
-  user_data = base64encode(file("${path.module}/${var.environment == "semaphore" ? "user_data_semaphore.sh" : "user_data_control.sh"}"))
+  user_data = base64encode(
+    var.environment == "semaphore"
+      ? templatefile("${path.module}/user_data_semaphore.sh", {
+          ansible_password_secret_name = var.ansible_password_secret_name
+          aws_region                   = data.aws_region.current.name
+        })
+      : file("${path.module}/user_data_control.sh")
+  )
 
   tags = {
     Name = var.environment == "semaphore" ? "semaphore-server" : "control-node"

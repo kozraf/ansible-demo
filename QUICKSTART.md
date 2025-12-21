@@ -49,7 +49,37 @@ terragrunt apply
 
 **What happens**: Reuses the dev VPC and its existing subnet; creates only the Semaphore control node (no host1/host2). Port 3000 is opened on its SG.
 
-### 5. Get Instance IPs
+### 5. Access Semaphore UI (if deployed)
+
+Get the Semaphore instance IP:
+
+```bash
+cd ../semaphore
+terragrunt output semaphore_public_ip
+```
+
+Open your browser to: `http://<semaphore-public-ip>:3000`
+
+**Retrieve Admin Credentials**
+
+The admin password is securely stored in AWS Secrets Manager:
+
+```bash
+# Get the secret name from dev stack output
+SECRET_NAME=$(cd ../dev && terragrunt output -raw ansible_password_secret_name)
+
+# Retrieve the password
+aws secretsmanager get-secret-value \
+  --secret-id "$SECRET_NAME" \
+  --query SecretString \
+  --output text
+```
+
+**Login**:
+- Username: `admin`
+- Password: (from Secrets Manager)
+
+### 6. Get Instance IPs
 
 ```bash
 terragrunt output
@@ -57,7 +87,7 @@ terragrunt output
 
 Note the public IPs and private IPs from the output.
 
-### 6. Access Control Node
+### 7. Access Control Node
 
 **Option A: SSH (Traditional)**
 ```bash
@@ -70,7 +100,7 @@ ssh -i /path/to/keypair.pem ubuntu@<control-node-public-ip>
 aws ssm start-session --target <control-node-instance-id>
 ```
 
-### 6. Access Linux Host via Session Manager
+### 8. Access Linux Host via Session Manager
 
 ```bash
 # Connect to Linux host via Session Manager
