@@ -40,7 +40,12 @@ step="install-dependencies"
 log "STEP: $${step} - installing dependencies"
 apt-get install -y --no-install-recommends \
     git curl wget ca-certificates unzip jq vim nano \
-    ansible openssh-client python3-pip awscli
+    ansible openssh-client python3-pip
+step_complete "$${step}"
+
+step="install-aws-cli"
+log "STEP: $${step} - installing AWS CLI via snap"
+snap install aws-cli --classic
 step_complete "$${step}"
 
 step="download-semaphore"

@@ -33,14 +33,29 @@ output "control_node_id" {
   value       = module.ec2.control_node_id
 }
 
+output "semaphore_server_id" {
+  description = "Semaphore server instance ID (alias for control_node_id)"
+  value       = module.ec2.semaphore_server_id
+}
+
 output "control_node_public_ip" {
   description = "Ansible control node public IP"
   value       = module.ec2.control_node_public_ip
 }
 
+output "semaphore_public_ip" {
+  description = "Semaphore server public IP (alias for control_node_public_ip)"
+  value       = module.ec2.semaphore_public_ip
+}
+
 output "control_node_private_ip" {
   description = "Ansible control node private IP"
   value       = module.ec2.control_node_private_ip
+}
+
+output "semaphore_private_ip" {
+  description = "Semaphore server private IP (alias for control_node_private_ip)"
+  value       = module.ec2.semaphore_private_ip
 }
 
 output "host1_linux_id" {
