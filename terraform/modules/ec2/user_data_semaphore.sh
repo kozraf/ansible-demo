@@ -40,7 +40,7 @@ step="install-dependencies"
 log "STEP: $${step} - installing dependencies"
 apt-get install -y --no-install-recommends \
     git curl wget ca-certificates unzip jq vim nano \
-    ansible openssh-client python3-pip
+    ansible openssh-client python3-pip awscli
 step_complete "$${step}"
 
 step="download-semaphore"
