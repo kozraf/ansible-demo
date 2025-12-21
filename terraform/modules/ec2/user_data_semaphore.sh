@@ -64,7 +64,11 @@ step_complete "$${step}"
 
 step="configure-semaphore"
 log "STEP: $${step} - configuring Semaphore"
-cat > /opt/semaphore/config.json <<'EOF'
+COOKIE_HASH=$(openssl rand -base64 32)
+COOKIE_ENCRYPTION=$(openssl rand -base64 32)
+ACCESS_KEY_ENCRYPTION=$(openssl rand -base64 32)
+
+cat > /opt/semaphore/config.json <<EOF
 {
   "mysql": {
     "host": "",
@@ -78,9 +82,9 @@ cat > /opt/semaphore/config.json <<'EOF'
   "port": ":3000",
   "interface": "0.0.0.0",
   "tmp_path": "/tmp/semaphore",
-  "cookie_hash": "$(openssl rand -base64 32)",
-  "cookie_encryption": "$(openssl rand -base64 32)",
-  "access_key_encryption": "$(openssl rand -base64 32)",
+  "cookie_hash": "${COOKIE_HASH}",
+  "cookie_encryption": "${COOKIE_ENCRYPTION}",
+  "access_key_encryption": "${ACCESS_KEY_ENCRYPTION}",
   "email_sender": "",
   "email_host": "",
   "email_port": "",
