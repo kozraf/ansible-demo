@@ -12,9 +12,6 @@ dependency "dev" {
   mock_outputs = {
     vpc_id                 = "vpc-mock"
     subnet_id              = "subnet-mock"
-    control_node_sg_id     = "sg-mock"
-    linux_hosts_sg_id      = "sg-mock"
-    windows_hosts_sg_id    = "sg-mock"
     ansible_password_secret_name = "secret/mock"
   }
 }
@@ -27,10 +24,9 @@ inputs = {
   use_existing_network = true
   existing_vpc_id      = dependency.dev.outputs.vpc_id
   existing_subnet_id   = dependency.dev.outputs.subnet_id
-  use_existing_security_groups = true
-  existing_control_node_sg_id  = dependency.dev.outputs.control_node_sg_id
-  existing_linux_hosts_sg_id   = dependency.dev.outputs.linux_hosts_sg_id
-  existing_windows_hosts_sg_id = dependency.dev.outputs.windows_hosts_sg_id
+  
+  # Create separate security groups for semaphore (not reusing dev's)
+  use_existing_security_groups = false
   
   # Semaphore server configuration
   instance_type        = "t3.small"  # Semaphore needs more resources
