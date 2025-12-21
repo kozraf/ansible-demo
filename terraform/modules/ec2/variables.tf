@@ -58,3 +58,21 @@ variable "ansible_password_secret_name" {
   description = "Name of the Secrets Manager secret containing ansible user password"
   type        = string
 }
+
+variable "create_control_node" {
+  description = "Whether to create the control/semaphore node"
+  type        = bool
+  default     = true
+}
+
+variable "create_host1_linux" {
+  description = "Whether to create the Linux managed host"
+  type        = bool
+  default     = true
+}
+
+variable "create_host2_windows" {
+  description = "Whether to create the Windows managed host"
+  type        = bool
+  default     = true
+}

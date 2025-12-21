@@ -134,8 +134,27 @@ step_complete "${step}"
 
 step="setup-admin-user"
 log "STEP: ${step} - setting up admin user"
-# Run semaphore setup to create admin user non-interactively
-sudo -u semaphore bash -c 'cd /opt/semaphore && semaphore setup --config /opt/semaphore/config.json'
+# Run semaphore setup with BoltDB selected (option 2) and default values for all prompts
+SEMAPHORE_PASSWORD=$(openssl rand -base64 16)
+{
+    echo "2"  # Select BoltDB (option 2)
+    echo ""  # db Hostname (default)
+    echo ""  # db User (default)
+    echo ""  # db Password (default)
+    echo ""  # db Name (default)
+    echo "/opt/semaphore/playbooks"  # Playbook path
+    echo ""  # Public URL (optional)
+    echo "no"  # Enable email alerts
+    echo "no"  # Enable telegram alerts
+    echo "no"  # Enable slack alerts
+    echo "no"  # Enable Rocket.Chat alerts
+    echo "no"  # Enable Microsoft Team alerts
+    echo "no"  # Enable LDAP
+    echo "/opt/semaphore"  # Config output directory
+    echo "admin"  # Admin username
+    echo "$SEMAPHORE_PASSWORD"  # Admin password
+    echo "$SEMAPHORE_PASSWORD"  # Confirm password
+} | sudo -u semaphore bash -c 'cd /opt/semaphore && semaphore setup --config /opt/semaphore/config.json' || log "Setup completed with exit code $?"
 step_complete "${step}"
 
 step="start-semaphore"

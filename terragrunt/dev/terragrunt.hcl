@@ -22,4 +22,10 @@ inputs = {
   vpc_cidr     = "10.0.0.0/16"
   subnet_cidr  = "10.0.1.0/24"
   instance_type = "t2.micro"
+  create_vpc   = true  # Dev creates the VPC
+
+  # Build the full lab stack in dev
+  create_control_node  = true
+  create_host1_linux   = true
+  create_host2_windows = true
 }

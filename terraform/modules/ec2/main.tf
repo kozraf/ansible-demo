@@ -9,7 +9,7 @@ terraform {
 
 # IAM Role for SSM
 resource "aws_iam_role" "ssm_role" {
-  name = "${var.project_name}-ssm-role"
+  name = "${var.project_name}-${var.environment}-ssm-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -25,7 +25,7 @@ resource "aws_iam_role" "ssm_role" {
   })
 
   tags = {
-    Name = "${var.project_name}-ssm-role"
+    Name = "${var.project_name}-${var.environment}-ssm-role"
   }
 }
 
@@ -37,7 +37,7 @@ resource "aws_iam_role_policy_attachment" "ssm_managed_instance_core" {
 
 # Attach Secrets Manager policy
 resource "aws_iam_role_policy" "secrets_manager_access" {
-  name = "${var.project_name}-secrets-manager-policy"
+  name = "${var.project_name}-${var.environment}-secrets-manager-policy"
   role = aws_iam_role.ssm_role.id
 
   policy = jsonencode({
@@ -56,7 +56,7 @@ resource "aws_iam_role_policy" "secrets_manager_access" {
 
 # Instance Profile
 resource "aws_iam_instance_profile" "ssm_profile" {
-  name = "${var.project_name}-ssm-profile"
+  name = "${var.project_name}-${var.environment}-ssm-profile"
   role = aws_iam_role.ssm_role.name
 }
 
@@ -99,6 +99,7 @@ data "aws_ami" "windows_2022" {
 
 # Control Node - Ubuntu 24 (Can be Ansible Control or Semaphore Server)
 resource "aws_instance" "control_node" {
+  count                  = var.create_control_node ? 1 : 0
   ami                    = data.aws_ami.ubuntu_24.id
   instance_type          = var.instance_type
   subnet_id              = var.subnet_id
@@ -122,6 +123,7 @@ resource "aws_instance" "control_node" {
 
 # Linux Host 1 - Ubuntu 24
 resource "aws_instance" "host1_linux" {
+  count                  = var.create_host1_linux ? 1 : 0
   ami                    = data.aws_ami.ubuntu_24.id
   instance_type          = var.instance_type
   subnet_id              = var.subnet_id
@@ -145,6 +147,7 @@ resource "aws_instance" "host1_linux" {
 
 # Windows Host - Windows Server 2022
 resource "aws_instance" "host2_windows" {
+  count                  = var.create_host2_windows ? 1 : 0
   ami                    = data.aws_ami.windows_2022.id
   instance_type          = var.instance_type
   subnet_id              = var.subnet_id
@@ -167,6 +170,4 @@ resource "aws_instance" "host2_windows" {
   tags = {
     Name = "host2-win"
   }
-
-  depends_on = [aws_instance.control_node, aws_instance.host1_linux]
 }

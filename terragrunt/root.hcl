@@ -45,8 +45,8 @@ generate "provider" {
       
       default_tags {
         tags = {
-          Project     = "${local.project_name}"
-          Environment = "${local.environment}"
+          Project     = "$${var.project_name}"
+          Environment = "$${var.environment}"
           ManagedBy   = "Terragrunt"
         }
       }

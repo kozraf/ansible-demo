@@ -17,21 +17,21 @@ aws configure
 # Enter your AWS Access Key ID and Secret Access Key
 ```
 
-### 2. Deploy Backend Infrastructure
+### 2. Deploy Backend Infrastructure (state bucket + lock)
 
 ```bash
 cd terragrunt/backend-infrastructure
-terragrunt init
+terragrunt init -reconfigure
 terragrunt apply
 ```
 
 **What happens**: Creates S3 bucket and DynamoDB table for Terraform state.
 
-### 3. Deploy Main Infrastructure
+### 3. Deploy Main Infrastructure (dev stack)
 
 ```bash
 cd ../dev
-terragrunt init
+terragrunt init -reconfigure
 terragrunt apply
 ```
 
@@ -39,7 +39,17 @@ terragrunt apply
 
 **Wait time**: ~10-15 minutes for Windows instance to fully initialize.
 
-### 4. Get Instance IPs
+### 4. Deploy Semaphore-only stack (optional)
+
+```bash
+cd ../semaphore
+terragrunt init -reconfigure
+terragrunt apply
+```
+
+**What happens**: Reuses the dev VPC and its existing subnet; creates only the Semaphore control node (no host1/host2). Port 3000 is opened on its SG.
+
+### 5. Get Instance IPs
 
 ```bash
 terragrunt output
@@ -47,7 +57,7 @@ terragrunt output
 
 Note the public IPs and private IPs from the output.
 
-### 5. Access Control Node
+### 6. Access Control Node
 
 **Option A: SSH (Traditional)**
 ```bash
@@ -104,6 +114,18 @@ terragrunt destroy
 cd ../backend-infrastructure
 terragrunt destroy
 ```
+
+If you deployed the Semaphore stack, destroy it too:
+
+```bash
+cd ../semaphore
+terragrunt destroy
+```
+
+## Switching to a new temporary AWS account
+
+- Run `terragrunt init -reconfigure` in each stack (`backend-infrastructure`, `dev`, and `semaphore`) because the remote-state bucket name changes with the account ID.
+- You do not have to delete `.terragrunt-cache`; `-reconfigure` is sufficient. If you prefer a clean run, you can delete `.terragrunt-cache` after switching credentials.
 
 ## Key Files
 

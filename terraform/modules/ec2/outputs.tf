@@ -1,36 +1,36 @@
 output "control_node_id" {
   description = "Control node instance ID"
-  value       = aws_instance.control_node.id
+  value       = try(aws_instance.control_node[0].id, null)
 }
 
 output "control_node_public_ip" {
   description = "Control node public IP"
-  value       = aws_instance.control_node.public_ip
+  value       = try(aws_instance.control_node[0].public_ip, null)
 }
 
 output "control_node_private_ip" {
   description = "Control node private IP"
-  value       = aws_instance.control_node.private_ip
+  value       = try(aws_instance.control_node[0].private_ip, null)
 }
 
 output "host1_linux_id" {
   description = "Linux host 1 instance ID"
-  value       = aws_instance.host1_linux.id
+  value       = try(aws_instance.host1_linux[0].id, null)
 }
 
 output "host1_linux_private_ip" {
   description = "Linux host 1 private IP"
-  value       = aws_instance.host1_linux.private_ip
+  value       = try(aws_instance.host1_linux[0].private_ip, null)
 }
 
 output "host2_windows_id" {
   description = "Windows host 2 instance ID"
-  value       = aws_instance.host2_windows.id
+  value       = try(aws_instance.host2_windows[0].id, null)
 }
 
 output "host2_windows_private_ip" {
   description = "Windows host 2 private IP"
-  value       = aws_instance.host2_windows.private_ip
+  value       = try(aws_instance.host2_windows[0].private_ip, null)
 }
 
 output "ubuntu_ami_id" {
